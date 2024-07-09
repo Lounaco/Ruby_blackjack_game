@@ -1,5 +1,16 @@
 # frozen_string_literal: true
 
+class Player
+  attr_accessor :name, :bank
+  def initialize(name)
+    @name = name
+    @bank = 100
+end
+
+class Dealer < Player
+  def initialize
+    super("Dealer")
+end
 
 class Game
   attr_accessor :player_name, :player_bank, :dealer_bank
