@@ -1,17 +1,30 @@
 # frozen_string_literal: true
 
+class Card
+end
+
+# Player information management method
 class Player
   attr_accessor :name, :bank
   def initialize(name)
     @name = name
     @bank = 100
+  end
+
+  def add_card
+  end
+
+  def score
+  end
 end
 
 class Dealer < Player
   def initialize
     super("Dealer")
+  end
 end
 
+# The method controls the overall logic of the game
 class Game
   attr_accessor :player_name, :player_bank, :dealer_bank
 
