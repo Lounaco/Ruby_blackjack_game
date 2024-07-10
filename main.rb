@@ -1,6 +1,43 @@
 # frozen_string_literal: true
 
 class Card
+  SUITS = ['♠', '♥', '♦', '♣'].freeze
+  RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'].freeze
+
+  attr_accessor :suit, :rank
+
+  # Initialize a card with suit and rank
+  def initialize(suit,rank)
+    @suit = suit
+    @rank = rank
+  end
+
+  # Determine the value of the card
+  def value
+    case @rank
+    when 'J', 'Q', 'K' then 10
+    when 'A' then 11
+    else @rank.to_i
+    end
+  end
+
+  # Return the string representation of the card
+  def to_s
+    "#{@rank}-#{@suit}"
+  end
+end
+
+class Deck
+  # Initialize the deck with shuffled cards
+  def initialize
+    @cards = create_shuffled_deck
+  end
+
+  # Create a shuffled deck of cards
+  def create_shuffled_deck
+    deck = 
+  end
+
 end
 
 # Player information management method
