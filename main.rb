@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
+# Class representing a single card in the deck
 class Card
-  SUITS = ['♠', '♥', '♦', '♣'].freeze
-  RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'].freeze
+  SUITS = ['♠', '♥', '♦', '♣'].freeze  # Suits of the cards
+  RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'].freeze  # Ranks of the cards
 
   attr_accessor :suit, :rank
 
@@ -27,7 +28,9 @@ class Card
   end
 end
 
+# Class representing a deck of cards
 class Deck
+  # Initialize the deck with shuffled cards
   def initialize
     @cards = create_shuffled_deck
   end
@@ -42,18 +45,21 @@ class Deck
 
   # Draw a card from the deck
   def draw
+    reshuffle_if_needed
     @cards.pop
   end
 
-  # Reshuffle the deck if it's empty
+  # Check if the deck is empty and reshuffle if necessary
   def reshuffle_if_needed
     @cards = create_shuffled_deck if @cards.empty?
   end
 end
 
+# Class representing a player (or dealer) in the game
 class Player
   attr_accessor :name, :bank, :hand
 
+  # Initialize a player with a name and default bank amount
   def initialize(name)
     @name = name
     @bank = 100
@@ -84,22 +90,19 @@ class Player
   end
 end
 
+# Class representing the dealer in the game, inherits from Player
 class Dealer < Player
   def initialize
-    super("Dealer")
-  end
-
-  # Display the dealer's hand with hidden cards
-  def show_hidden_hand
-    @hand.map { '*' }.join(', ')
+    super('Dealer')
   end
 end
 
+# Class containing the main logic of the Blackjack game
 class Game
   WELCOME_MESSAGE = "Welcome to the Blackjack game!"
   PROMPT_PLAYER_NAME = "Enter your name: "
   THANKS_FOR_PLAYING = "Thanks for playing!"
-  PLAY_AGAIN_PROMPT = "Do you want to play again? (yes/no): "
+  PLAY_AGAIN_PROMPT = "Do you want to play again? (yes/no)"
 
   def initialize
     @deck = Deck.new
@@ -110,6 +113,7 @@ class Game
     display_welcome_message
     initialize_players
     game_loop
+    puts THANKS_FOR_PLAYING
   end
 
   private
@@ -142,126 +146,105 @@ class Game
     loop do
       play_round
       break unless play_again?
-      reset_hands
     end
-    puts THANKS_FOR_PLAYING
   end
 
-  # Play one round of the game
+  # Play a single round of the game
   def play_round
+    puts "Starting a new round..."
     deal_initial_cards
-    place_bets
     player_turn
-    dealer_turn unless @player.score > 21
-    reveal_cards
+    dealer_turn unless @player.hand.size == 3
+    show_final_hands
     determine_winner
+    reset_hands
   end
 
   # Deal initial cards to player and dealer
   def deal_initial_cards
-    2.times do
-      @player.add_card(@deck.draw)
-      @dealer.add_card(@deck.draw)
-    end
+    @player.add_card(@deck.draw)
+    @player.add_card(@deck.draw)
+    @dealer.add_card(@deck.draw)
+    @dealer.add_card(@deck.draw)
     show_initial_hands
   end
 
-  # Place initial bets
-  def place_bets
-    @player.bank -= 10
-    @dealer.bank -= 10
-    @pot = 20
+  # Show initial hands of player and dealer (with one dealer card hidden)
+  def show_initial_hands
+    puts "Your initial hand: #{@player.show_hand} (Score: #{@player.score})"
+    puts "Dealer's initial hand: #{@dealer.hand.first} and *"
   end
 
-  # Handle the player's turn
+  # Handle player's turn
   def player_turn
-    loop do
-      puts "Your hand: #{@player.show_hand} (Score: #{@player.score})"
-      puts "Dealer's hand: #{@dealer.show_hidden_hand}"
-
-      if @player.score >= 21
-        puts "You cannot take more actions."
-        break
-      end
-
-      puts "Choose an action: 1) Pass 2) Add card 3) Open cards"
-      action = gets.chomp.to_i
-      case action
-      when 1
-        break
-      when 2
-        if @player.hand.size == 2
-          @player.add_card(@deck.draw)
-          break
-        else
-          puts "You can only add one card."
-        end
-      when 3
-        break
+    puts "Choose an action: 1) Pass 2) Add card 3) Open cards"
+    action = gets.chomp.to_i
+    case action
+    when 1
+      puts "You chose to pass."
+    when 2
+      if @player.hand.size == 2
+        @player.add_card(@deck.draw)
+        puts "You drew a card. Your hand: #{@player.show_hand} (Score: #{@player.score})"
       else
-        puts "Invalid choice. Please try again."
+        puts "You cannot add more cards."
       end
+    when 3
+      puts "You chose to open cards."
+    else
+      puts "Invalid choice. Passing turn."
     end
   end
 
-  # Handle the dealer's turn
+  # Handle dealer's turn
   def dealer_turn
-    loop do
-      break if @dealer.score >= 17
+    while @dealer.score < 17
       @dealer.add_card(@deck.draw)
+      puts "Dealer drew a card."
     end
   end
 
-  # Reveal both player's and dealer's cards
-  def reveal_cards
-    puts "Dealer's hand: #{@dealer.show_hand} (Score: #{@dealer.score})"
-    puts "Your hand: #{@player.show_hand} (Score: #{@player.score})"
+  # Show final hands of player and dealer
+  def show_final_hands
+    puts "Your final hand: #{@player.show_hand} (Score: #{@player.score})"
+    puts "Dealer's final hand: #{@dealer.show_hand} (Score: #{@dealer.score})"
   end
 
   # Determine the winner of the round
   def determine_winner
     player_score = @player.score
     dealer_score = @dealer.score
-
     if player_score > 21
       puts "You busted! Dealer wins."
-      @dealer.bank += @pot
+      @dealer.bank += 20
     elsif dealer_score > 21 || player_score > dealer_score
       puts "You win!"
-      @player.bank += @pot
-    elsif dealer_score > player_score
+      @player.bank += 20
+    elsif player_score < dealer_score
       puts "Dealer wins."
-      @dealer.bank += @pot
+      @dealer.bank += 20
     else
       puts "It's a tie!"
-      @player.bank += @pot / 2
-      @dealer.bank += @pot / 2
+      @player.bank += 10
+      @dealer.bank += 10
     end
-    show_banks
+    puts "Your bank: #{@player.bank}"
+    puts "Dealer's bank: #{@dealer.bank}"
   end
 
-  # Display the current bank amounts
-  def show_banks
-    puts "#{@player.name}'s bank: $#{@player.bank}"
-    puts "Dealer's bank: $#{@dealer.bank}"
-  end
-
-  # Prompt the player to play again
+  # Ask player if they want to play again
   def play_again?
     print PLAY_AGAIN_PROMPT
     gets.chomp.downcase == 'yes'
   end
 
-  # Reset the hands of both player and dealer
+  # Reset hands of player and dealer for a new round
   def reset_hands
     @player.clear_hand
     @dealer.clear_hand
-    @deck.reshuffle_if_needed
-  end
-
-  # Display initial hands of the player and the dealer (with one hidden card)
-  def show_initial_hands
-    puts "Your initial hand: #{@player.show_hand} (Score: #{@player.score})"
-    puts "Dealer's initial hand: #{@dealer.hand[0]} and *"
   end
 end
+
+# Instantiate and start the game
+game = Game.new
+game.start
