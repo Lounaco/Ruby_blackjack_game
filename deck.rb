@@ -4,7 +4,6 @@ require_relative 'card'
 
 # Class representing a deck of cards
 class Deck
-  # Initialize the deck with shuffled cards
   def initialize
     @cards = create_shuffled_deck
   end

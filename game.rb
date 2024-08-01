@@ -13,6 +13,10 @@ class Game
 
   def initialize
     @deck = Deck.new
+    @player = nil
+    @dealer = nil
+    @player_bank = 100
+    @dealer_bank = 100
   end
 
   # Start the game
@@ -51,6 +55,10 @@ class Game
   # Main game loop
   def game_loop
     loop do
+      # Reset bank values for each new game
+      @player.bank = @player_bank
+      @dealer.bank = @dealer_bank
+      
       play_round
       break unless play_again?
     end
@@ -59,12 +67,20 @@ class Game
   # Play a single round of the game
   def play_round
     puts "Starting a new round..."
+    make_bets
     deal_initial_cards
     player_turn
     dealer_turn unless @player.hand.size == 3
     show_final_hands
     determine_winner
     reset_hands
+  end
+
+  # Deduct bets from player's and dealer's bank
+  def make_bets
+    @player.bank -= 10
+    @dealer.bank -= 10
+    @bank = 20
   end
 
   # Deal initial cards to player and dealer
@@ -84,22 +100,22 @@ class Game
 
   # Handle player's turn
   def player_turn
-    puts "Choose an action: 1) Pass 2) Add card 3) Open cards"
+    puts 'Choose an action: 1) Pass 2) Add card 3) Open cards'
     action = gets.chomp.to_i
     case action
     when 1
-      puts "You chose to pass."
+      puts 'You chose to pass.'
     when 2
       if @player.hand.size == 2
         @player.add_card(@deck.draw)
         puts "You drew a card. Your hand: #{@player.show_hand} (Score: #{@player.score})"
       else
-        puts "You cannot add more cards."
+        puts 'You cannot add more cards.'
       end
     when 3
-      puts "You chose to open cards."
+      puts 'You chose to open cards.'
     else
-      puts "Invalid choice. Passing turn."
+      puts 'Invalid choice. Passing turn.'
     end
   end
 
@@ -121,22 +137,31 @@ class Game
   def determine_winner
     player_score = @player.score
     dealer_score = @dealer.score
-    if player_score > 21
-      puts "You busted! Dealer wins."
+
+    if player_score > 21 && dealer_score > 21
+      puts "Both you and the dealer busted! It's a tie."
+      @player.bank += 10
+      @dealer.bank += 10
+    elsif player_score > 21
+      puts 'You busted! Dealer wins.'
       @dealer.bank += 20
-    elsif dealer_score > 21 || player_score > dealer_score
-      puts "You win!"
+    elsif dealer_score > 21
+      puts 'Dealer busted! You win.'
+      @player.bank += 20
+    elsif player_score > dealer_score
+      puts 'You win!'
       @player.bank += 20
     elsif player_score < dealer_score
-      puts "Dealer wins."
+      puts 'Dealer wins.'
       @dealer.bank += 20
     else
       puts "It's a tie!"
       @player.bank += 10
       @dealer.bank += 10
     end
-    puts "Your bank: #{@player.bank}"
-    puts "Dealer's bank: #{@dealer.bank}"
+
+    puts "Before determining winner: Player bank: #{@player_bank}, Dealer bank: #{@dealer_bank}"
+    puts "After determining winner: Player bank: #{@player.bank}, Dealer bank: #{@dealer.bank}"
   end
 
   # Ask player if they want to play again
