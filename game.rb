@@ -15,8 +15,6 @@ class Game
     @deck = Deck.new
     @player = nil
     @dealer = nil
-    @player_bank = 100
-    @dealer_bank = 100
   end
 
   # Start the game
@@ -55,18 +53,18 @@ class Game
   # Main game loop
   def game_loop
     loop do
-      # Reset bank values for each new game
-      @player.bank = @player_bank
-      @dealer.bank = @dealer_bank
-      
       play_round
+      break if @player.bank <= 0 || @dealer.bank <= 0
       break unless play_again?
     end
+
+    puts "Game over! #{@player.bank <= 0 ? 'You' : 'The dealer'} have no money left."
   end
 
   # Play a single round of the game
   def play_round
     puts "Starting a new round..."
+    display_bank_before_round
     make_bets
     deal_initial_cards
     player_turn
@@ -100,22 +98,27 @@ class Game
 
   # Handle player's turn
   def player_turn
-    puts 'Choose an action: 1) Pass 2) Add card 3) Open cards'
-    action = gets.chomp.to_i
-    case action
-    when 1
-      puts 'You chose to pass.'
-    when 2
-      if @player.hand.size == 2
-        @player.add_card(@deck.draw)
-        puts "You drew a card. Your hand: #{@player.show_hand} (Score: #{@player.score})"
+    loop do
+      puts 'Choose an action: 1) Pass 2) Add card 3) Open cards'
+      action = gets.chomp.to_i
+      case action
+      when 1
+        puts 'You chose to pass.'
+        break
+      when 2
+        if @player.hand.size == 2
+          @player.add_card(@deck.draw)
+          puts "You drew a card. Your hand: #{@player.show_hand} (Score: #{@player.score})"
+          break
+        else
+          puts 'You cannot add more cards.'
+        end
+      when 3
+        puts 'You chose to open cards.'
+        break
       else
-        puts 'You cannot add more cards.'
+        puts 'Invalid choice. Please choose 1, 2, or 3.'
       end
-    when 3
-      puts 'You chose to open cards.'
-    else
-      puts 'Invalid choice. Passing turn.'
     end
   end
 
@@ -160,7 +163,16 @@ class Game
       @dealer.bank += 10
     end
 
-    puts "Before determining winner: Player bank: #{@player_bank}, Dealer bank: #{@dealer_bank}"
+    display_bank_after_round
+  end
+
+  # Display bank before the round
+  def display_bank_before_round
+    puts "Before determining winner: Player bank: #{@player.bank}, Dealer bank: #{@dealer.bank}"
+  end
+
+  # Display bank after the round
+  def display_bank_after_round
     puts "After determining winner: Player bank: #{@player.bank}, Dealer bank: #{@dealer.bank}"
   end
 
